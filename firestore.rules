@@ -1,0 +1,581 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function userExists(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function materialExists(userId, materialId) {
+      return exists(/databases/$(database)/documents/users/$(userId)/materials/$(materialId));
+    }
+
+    // Validation Blueprint: UserProfile
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+          'uid', 'displayName', 'email', 'photoURL',
+          'activeMaterialId', 'themePreference',
+          'createdAt', 'lastActiveAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'displayName', 'email', 'photoURL',
+          'activeMaterialId', 'themePreference',
+          'createdAt', 'lastActiveAt', 'updatedAt'
+        ])
+        && data.uid is string && data.uid == request.auth.uid && data.uid == userId
+        && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 120
+        && data.email is string && data.email.size() >= 0 && data.email.size() <= 254
+        && data.photoURL is string && data.photoURL.size() >= 0 && data.photoURL.size() <= 1024
+        && data.activeMaterialId is string && data.activeMaterialId.size() >= 0 && data.activeMaterialId.size() <= 128
+        && data.themePreference is string && data.themePreference.size() <= 16
+        && (data.themePreference == 'light' || data.themePreference == 'dark' || data.themePreference == 'system')
+        && data.createdAt is timestamp
+        && data.lastActiveAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: MaterialRecord
+    function isValidMaterialRecord(data, userId, materialId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'title', 'sourceType', 'pageCount',
+          'iconColor', 'lastStudiedAt', 'pagesData', 'analysisData',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'title', 'sourceType', 'pageCount',
+          'iconColor', 'lastStudiedAt', 'pagesData', 'analysisData',
+          'createdAt', 'updatedAt'
+        ])
+        && data.id is string && data.id == materialId && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId == userId && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.sourceType is string && data.sourceType.size() <= 16 && (data.sourceType == 'pdf' || data.sourceType == 'text' || data.sourceType == 'youtube')
+        && data.pageCount is int && data.pageCount >= 1 && data.pageCount <= 20
+        && data.iconColor is string && data.iconColor.size() <= 16 && (data.iconColor == 'red' || data.iconColor == 'blue' || data.iconColor == 'green' || data.iconColor == 'yellow')
+        && data.lastStudiedAt is string && data.lastStudiedAt.size() >= 1 && data.lastStudiedAt.size() <= 64
+        && data.pagesData is string && data.pagesData.size() >= 2 && data.pagesData.size() <= 450000
+        && data.analysisData is string && data.analysisData.size() >= 0 && data.analysisData.size() <= 150000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: QuizAttemptRecord
+    function isValidQuizAttemptRecord(data, userId, attemptId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'materialId', 'materialTitle', 'mode',
+          'score', 'total', 'percentage', 'attemptData', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'materialId', 'materialTitle', 'mode',
+          'score', 'total', 'percentage', 'attemptData', 'createdAt'
+        ])
+        && data.id is string && data.id == attemptId && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId == userId && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.materialId is string && data.materialId.size() >= 1 && data.materialId.size() <= 128 && data.materialId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.materialTitle is string && data.materialTitle.size() >= 1 && data.materialTitle.size() <= 200
+        && data.mode is string && data.mode.size() <= 20 && (data.mode == 'diagnostic' || data.mode == 'adaptive')
+        && data.score is int && data.score >= 0 && data.score <= 20
+        && data.total is int && data.total >= 1 && data.total <= 20
+        && data.percentage is int && data.percentage >= 0 && data.percentage <= 100
+        && data.attemptData is string && data.attemptData.size() >= 2 && data.attemptData.size() <= 250000
+        && data.createdAt is timestamp;
+    }
+
+    // Validation Blueprint: RevisionPlanRecord
+    function isValidRevisionPlanRecord(data, userId, planId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'materialId', 'tasksData',
+          'insightsData', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'materialId', 'tasksData',
+          'insightsData', 'createdAt', 'updatedAt'
+        ])
+        && data.id is string && data.id == planId && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId == userId && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.materialId is string && data.materialId.size() >= 1 && data.materialId.size() <= 128 && data.materialId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.tasksData is string && data.tasksData.size() >= 2 && data.tasksData.size() <= 150000
+        && data.insightsData is string && data.insightsData.size() >= 2 && data.insightsData.size() <= 150000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: FlashcardDeckRecord
+    function isValidFlashcardDeckRecord(data, userId, deckId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'materialId', 'flashcardsData',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'materialId', 'flashcardsData',
+          'createdAt', 'updatedAt'
+        ])
+        && data.id is string && data.id == deckId && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId == userId && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.materialId is string && data.materialId.size() >= 1 && data.materialId.size() <= 128 && data.materialId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.flashcardsData is string && data.flashcardsData.size() >= 2 && data.flashcardsData.size() <= 150000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: NoteRecord
+    function isValidNoteRecord(data, userId, noteId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'materialId', 'stickyNotesData',
+          'mindMapData', 'revisionSheetData', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'materialId', 'stickyNotesData',
+          'mindMapData', 'revisionSheetData', 'createdAt', 'updatedAt'
+        ])
+        && data.id is string && data.id == noteId && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId == userId && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.materialId is string && data.materialId.size() >= 1 && data.materialId.size() <= 128 && data.materialId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.stickyNotesData is string && data.stickyNotesData.size() >= 2 && data.stickyNotesData.size() <= 150000
+        && data.mindMapData is string && data.mindMapData.size() >= 2 && data.mindMapData.size() <= 150000
+        && data.revisionSheetData is string && data.revisionSheetData.size() >= 2 && data.revisionSheetData.size() <= 150000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: ConversationRecord
+    function isValidConversationRecord(data, userId, conversationId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'materialId', 'messagesData',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'materialId', 'messagesData',
+          'createdAt', 'updatedAt'
+        ])
+        && data.id is string && data.id == conversationId && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId == userId && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.materialId is string && data.materialId.size() >= 1 && data.materialId.size() <= 128 && data.materialId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.messagesData is string && data.messagesData.size() >= 2 && data.messagesData.size() <= 250000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: ProgressRecord
+    function isValidProgressRecord(data, userId, progressId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'materialId', 'studiedPagesData',
+          'masteryPct', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'materialId', 'studiedPagesData',
+          'masteryPct', 'createdAt', 'updatedAt'
+        ])
+        && data.id is string && data.id == progressId && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId == userId && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.materialId is string && data.materialId.size() >= 1 && data.materialId.size() <= 128 && data.materialId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.studiedPagesData is string && data.studiedPagesData.size() >= 2 && data.studiedPagesData.size() <= 20000
+        && data.masteryPct is int && data.masteryPct >= 0 && data.masteryPct <= 100
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: StudySessionRecord
+    function isValidStudySessionRecord(data, userId, sessionId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'materialId', 'materialTitle',
+          'durationMinutes', 'completedAt', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'materialId', 'materialTitle',
+          'durationMinutes', 'completedAt', 'createdAt'
+        ])
+        && data.id is string && data.id == sessionId && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId == userId && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.materialId is string && data.materialId.size() >= 1 && data.materialId.size() <= 128 && data.materialId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.materialTitle is string && data.materialTitle.size() >= 1 && data.materialTitle.size() <= 200
+        && data.durationMinutes is int && data.durationMinutes >= 1 && data.durationMinutes <= 240
+        && data.completedAt is string && data.completedAt.size() >= 1 && data.completedAt.size() <= 64
+        && data.createdAt is timestamp;
+    }
+
+    // Legacy Validation Blueprints (Preserved for safe migration)
+    function isValidRevisionStateRecord(data, userId, stateId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'materialId', 'tasksData',
+          'insightsData', 'chatData', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'materialId', 'tasksData',
+          'insightsData', 'chatData', 'createdAt', 'updatedAt'
+        ])
+        && data.id is string && data.id == stateId && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId == userId && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.materialId is string && data.materialId.size() >= 1 && data.materialId.size() <= 128 && data.materialId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.tasksData is string && data.tasksData.size() >= 2 && data.tasksData.size() <= 150000
+        && data.insightsData is string && data.insightsData.size() >= 2 && data.insightsData.size() <= 150000
+        && data.chatData is string && data.chatData.size() >= 2 && data.chatData.size() <= 250000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidLearningToolsRecord(data, userId, toolId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'materialId', 'stickyNotesData',
+          'flashcardsData', 'mindMapData', 'revisionSheetData',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'materialId', 'stickyNotesData',
+          'flashcardsData', 'mindMapData', 'revisionSheetData',
+          'createdAt', 'updatedAt'
+        ])
+        && data.id is string && data.id == toolId && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId == userId && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.materialId is string && data.materialId.size() >= 1 && data.materialId.size() <= 128 && data.materialId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.stickyNotesData is string && data.stickyNotesData.size() >= 2 && data.stickyNotesData.size() <= 150000
+        && data.flashcardsData is string && data.flashcardsData.size() >= 2 && data.flashcardsData.size() <= 150000
+        && data.mindMapData is string && data.mindMapData.size() >= 2 && data.mindMapData.size() <= 150000
+        && data.revisionSheetData is string && data.revisionSheetData.size() >= 2 && data.revisionSheetData.size() <= 150000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Collection 1: /users/{userId}
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+      allow create: if isVerifiedUser()
+        && isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().lastActiveAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().lastActiveAt == request.time
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'email', 'photoURL', 'activeMaterialId',
+          'themePreference', 'lastActiveAt', 'updatedAt'
+        ]);
+      allow delete: if false;
+
+      // Subcollection 2: /users/{userId}/materials/{materialId}
+      match /materials/{materialId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(materialId) && userExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(materialId)
+          && isValidMaterialRecord(incoming(), userId, materialId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userExists(userId);
+        allow update: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(materialId)
+          && isValidMaterialRecord(incoming(), userId, materialId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'lastStudiedAt', 'pagesData', 'analysisData', 'updatedAt'
+          ])
+          && userExists(userId);
+        allow delete: if isVerifiedUser() && isOwner(userId) && isValidId(userId) && isValidId(materialId) && userExists(userId);
+      }
+
+      // Subcollection 3: /users/{userId}/quizAttempts/{attemptId}
+      match /quizAttempts/{attemptId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(attemptId) && userExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(attemptId)
+          && isValidQuizAttemptRecord(incoming(), userId, attemptId)
+          && incoming().createdAt == request.time
+          && userExists(userId)
+          && materialExists(userId, incoming().materialId);
+        allow update: if false;
+        allow delete: if isVerifiedUser() && isOwner(userId) && isValidId(userId) && isValidId(attemptId) && userExists(userId);
+      }
+
+      // Subcollection 4: /users/{userId}/revisionPlans/{planId}
+      match /revisionPlans/{planId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(planId) && userExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(planId)
+          && isValidRevisionPlanRecord(incoming(), userId, planId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userExists(userId)
+          && materialExists(userId, incoming().materialId);
+        allow update: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(planId)
+          && isValidRevisionPlanRecord(incoming(), userId, planId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().materialId == existing().materialId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'tasksData', 'insightsData', 'updatedAt'
+          ])
+          && userExists(userId);
+        allow delete: if isVerifiedUser() && isOwner(userId) && isValidId(userId) && isValidId(planId) && userExists(userId);
+      }
+
+      // Subcollection 5: /users/{userId}/flashcards/{deckId}
+      match /flashcards/{deckId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(deckId) && userExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(deckId)
+          && isValidFlashcardDeckRecord(incoming(), userId, deckId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userExists(userId)
+          && materialExists(userId, incoming().materialId);
+        allow update: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(deckId)
+          && isValidFlashcardDeckRecord(incoming(), userId, deckId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().materialId == existing().materialId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'flashcardsData', 'updatedAt'
+          ])
+          && userExists(userId);
+        allow delete: if isVerifiedUser() && isOwner(userId) && isValidId(userId) && isValidId(deckId) && userExists(userId);
+      }
+
+      // Subcollection 6: /users/{userId}/notes/{noteId}
+      match /notes/{noteId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(noteId) && userExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(noteId)
+          && isValidNoteRecord(incoming(), userId, noteId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userExists(userId)
+          && materialExists(userId, incoming().materialId);
+        allow update: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(noteId)
+          && isValidNoteRecord(incoming(), userId, noteId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().materialId == existing().materialId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'stickyNotesData', 'mindMapData', 'revisionSheetData', 'updatedAt'
+          ])
+          && userExists(userId);
+        allow delete: if isVerifiedUser() && isOwner(userId) && isValidId(userId) && isValidId(noteId) && userExists(userId);
+      }
+
+      // Subcollection 7: /users/{userId}/conversations/{conversationId}
+      match /conversations/{conversationId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(conversationId) && userExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(conversationId)
+          && isValidConversationRecord(incoming(), userId, conversationId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userExists(userId)
+          && materialExists(userId, incoming().materialId);
+        allow update: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(conversationId)
+          && isValidConversationRecord(incoming(), userId, conversationId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().materialId == existing().materialId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'messagesData', 'updatedAt'
+          ])
+          && userExists(userId);
+        allow delete: if isVerifiedUser() && isOwner(userId) && isValidId(userId) && isValidId(conversationId) && userExists(userId);
+      }
+
+      // Subcollection 8: /users/{userId}/progress/{progressId}
+      match /progress/{progressId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(progressId) && userExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(progressId)
+          && isValidProgressRecord(incoming(), userId, progressId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userExists(userId)
+          && materialExists(userId, incoming().materialId);
+        allow update: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(progressId)
+          && isValidProgressRecord(incoming(), userId, progressId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().materialId == existing().materialId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'studiedPagesData', 'masteryPct', 'updatedAt'
+          ])
+          && userExists(userId);
+        allow delete: if isVerifiedUser() && isOwner(userId) && isValidId(userId) && isValidId(progressId) && userExists(userId);
+      }
+
+      // Subcollection 9: /users/{userId}/studySessions/{sessionId}
+      match /studySessions/{sessionId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(sessionId) && userExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(sessionId)
+          && isValidStudySessionRecord(incoming(), userId, sessionId)
+          && incoming().createdAt == request.time
+          && userExists(userId)
+          && materialExists(userId, incoming().materialId);
+        allow update: if false;
+        allow delete: if isVerifiedUser() && isOwner(userId) && isValidId(userId) && isValidId(sessionId) && userExists(userId);
+      }
+
+      // Legacy Subcollection 10: /users/{userId}/attempts/{attemptId}
+      match /attempts/{attemptId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(attemptId) && userExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(attemptId)
+          && isValidQuizAttemptRecord(incoming(), userId, attemptId)
+          && incoming().createdAt == request.time
+          && userExists(userId)
+          && materialExists(userId, incoming().materialId);
+        allow update: if false;
+        allow delete: if isVerifiedUser() && isOwner(userId) && isValidId(userId) && isValidId(attemptId) && userExists(userId);
+      }
+
+      // Legacy Subcollection 11: /users/{userId}/revisionStates/{stateId}
+      match /revisionStates/{stateId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(stateId) && userExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(stateId)
+          && isValidRevisionStateRecord(incoming(), userId, stateId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userExists(userId)
+          && materialExists(userId, incoming().materialId);
+        allow update: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(stateId)
+          && isValidRevisionStateRecord(incoming(), userId, stateId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().materialId == existing().materialId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'tasksData', 'insightsData', 'chatData', 'updatedAt'
+          ])
+          && userExists(userId);
+        allow delete: if isVerifiedUser() && isOwner(userId) && isValidId(userId) && isValidId(stateId) && userExists(userId);
+      }
+
+      // Legacy Subcollection 12: /users/{userId}/learningTools/{toolId}
+      match /learningTools/{toolId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(toolId) && userExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(toolId)
+          && isValidLearningToolsRecord(incoming(), userId, toolId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userExists(userId)
+          && materialExists(userId, incoming().materialId);
+        allow update: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(toolId)
+          && isValidLearningToolsRecord(incoming(), userId, toolId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().materialId == existing().materialId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'stickyNotesData', 'flashcardsData', 'mindMapData', 'revisionSheetData', 'updatedAt'
+          ])
+          && userExists(userId);
+        allow delete: if isVerifiedUser() && isOwner(userId) && isValidId(userId) && isValidId(toolId) && userExists(userId);
+      }
+    }
+  }
+}

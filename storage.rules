@@ -1,0 +1,36 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Global Default Deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-\\.]+$');
+    }
+
+    // Strict Per-User PDF Storage Isolation: /users/{userId}/materials/{fileName}
+    match /users/{userId}/materials/{fileName} {
+      allow read: if isOwner(userId) && isValidId(userId) && isValidId(fileName);
+      allow write: if isOwner(userId)
+        && isValidId(userId)
+        && isValidId(fileName)
+        && (
+          request.resource == null || (
+            request.resource.size > 0
+            && request.resource.size <= 15 * 1024 * 1024
+            && request.resource.contentType.matches('application/pdf')
+          )
+        );
+    }
+  }
+}

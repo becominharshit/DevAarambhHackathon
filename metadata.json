@@ -1,0 +1,10 @@
+{
+  "name": "Remix Remix Remix Remix LearnMate",
+  "description": "An AI-powered personalized study companion that turns your study material into interactive explanations, diagnostic quizzes, mistake analysis, and adaptive revision plans.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

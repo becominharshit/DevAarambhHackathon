@@ -1,0 +1,376 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    --font-handwriting: 'Kalam', cursive;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #FAFCFF;
+    color: #17223C;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  html.dark body {
+    background-color: #0B1120;
+    color: #F1F5F9;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Handwritten font strictly for Sticky Notes */
+.font-handwriting {
+  font-family: var(--font-handwriting);
+}
+
+/* Readable AI Explanation Prose (16px-17px, comfortable 1.68 line height) */
+.ai-explanation-prose {
+  max-width: 72ch;
+  line-height: 1.68;
+  font-size: 1rem;
+  color: #17223C;
+}
+
+html.dark .ai-explanation-prose {
+  color: #F1F5F9;
+}
+
+/* Thin Google 4-color Gradient Border Panel & Card */
+.google-gradient-panel {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(252, 253, 255, 0.98) 100%) padding-box,
+    linear-gradient(125deg, rgba(66, 133, 244, 0.52) 0%, rgba(234, 67, 53, 0.45) 34%, rgba(251, 188, 5, 0.45) 67%, rgba(52, 168, 83, 0.52) 100%) border-box;
+  box-shadow: 0 12px 40px -10px rgba(23, 34, 60, 0.055);
+}
+
+html.dark .google-gradient-panel {
+  background:
+    linear-gradient(180deg, #111827 0%, #0F172A 100%) padding-box,
+    linear-gradient(125deg, rgba(66, 133, 244, 0.55) 0%, rgba(234, 67, 53, 0.48) 34%, rgba(251, 188, 5, 0.48) 67%, rgba(52, 168, 83, 0.55) 100%) border-box;
+  box-shadow: 0 14px 42px -10px rgba(0, 0, 0, 0.45);
+}
+
+.google-gradient-card {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(180deg, #FFFFFF 0%, #FCFDFF 100%) padding-box,
+    linear-gradient(135deg, rgba(66, 133, 244, 0.36) 0%, rgba(234, 67, 53, 0.3) 35%, rgba(251, 188, 5, 0.32) 68%, rgba(52, 168, 83, 0.36) 100%) border-box;
+  box-shadow: 0 8px 28px -8px rgba(23, 34, 60, 0.045);
+}
+
+html.dark .google-gradient-card {
+  background:
+    linear-gradient(180deg, #111827 0%, #162033 100%) padding-box,
+    linear-gradient(135deg, rgba(66, 133, 244, 0.45) 0%, rgba(234, 67, 53, 0.38) 35%, rgba(251, 188, 5, 0.38) 68%, rgba(52, 168, 83, 0.45) 100%) border-box;
+}
+
+/* Secondary Study Navigation Toolbar Frosted Surface */
+.study-subtoolbar-glass {
+  background: linear-gradient(
+    90deg,
+    rgba(238, 245, 255, 0.88) 0%,
+    rgba(255, 246, 245, 0.88) 35%,
+    rgba(255, 251, 238, 0.88) 68%,
+    rgba(240, 252, 244, 0.88) 100%
+  );
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(219, 231, 249, 0.9);
+  box-shadow: 0 6px 24px -6px rgba(23, 34, 60, 0.04);
+}
+
+html.dark .study-subtoolbar-glass {
+  background: linear-gradient(
+    90deg,
+    rgba(17, 24, 39, 0.92) 0%,
+    rgba(24, 33, 52, 0.92) 50%,
+    rgba(17, 24, 39, 0.92) 100%
+  );
+  border: 1px solid #334155;
+}
+
+/* Hide scrollbars cleanly on horizontal carousels while keeping scrollability */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 3D Flashcard Flip Helpers */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* ========================================================================== */
+/* COMPREHENSIVE DARK THEME OVERRIDES (Scoped to @media screen only)          */
+/* ========================================================================== */
+@media screen {
+  html.dark .bg-\[\#FBFCFF\],
+  html.dark .bg-\[\#FAFCFF\] {
+    background-color: #0B1120 !important;
+  }
+
+  html.dark .bg-white,
+  html.dark .bg-white\/95,
+  html.dark .bg-white\/90,
+  html.dark .bg-white\/85,
+  html.dark .bg-white\/80 {
+    background-color: #111827 !important;
+  }
+
+  html.dark .bg-slate-50,
+  html.dark .bg-slate-50\/80,
+  html.dark .bg-slate-50\/70,
+  html.dark .bg-slate-50\/60,
+  html.dark .bg-slate-50\/50,
+  html.dark .bg-\[\#F8FAFF\],
+  html.dark .bg-\[\#F4F7FC\],
+  html.dark .bg-\[\#F3F6FC\],
+  html.dark .bg-\[\#F3F7FE\],
+  html.dark .bg-\[\#F3F7FE\]\/95 {
+    background-color: #1E293B !important;
+  }
+
+  html.dark .bg-slate-100,
+  html.dark .hover\:bg-slate-100:hover,
+  html.dark .hover\:bg-slate-50:hover {
+    background-color: #263349 !important;
+  }
+
+  html.dark .from-\[\#F4F8FF\],
+  html.dark .via-white,
+  html.dark .to-\[\#F3FAF6\],
+  html.dark .from-white,
+  html.dark .via-\[\#FBFDFF\],
+  html.dark .to-\[\#F4F8FF\],
+  html.dark .from-\[\#F8FAFF\] {
+    --tw-gradient-from: #111827 !important;
+    --tw-gradient-via: #162033 !important;
+    --tw-gradient-to: #1E293B !important;
+  }
+
+  html.dark .text-\[\#172033\],
+  html.dark .text-\[\#17223C\],
+  html.dark .text-\[\#0F172A\],
+  html.dark .text-slate-900,
+  html.dark .text-slate-800,
+  html.dark .text-slate-700 {
+    color: #F1F5F9 !important;
+  }
+
+  html.dark .text-\[\#64748B\],
+  html.dark .text-\[\#5D6A80\],
+  html.dark .text-slate-600,
+  html.dark .text-slate-500 {
+    color: #94A3B8 !important;
+  }
+
+  html.dark .border-slate-200,
+  html.dark .border-slate-200\/90,
+  html.dark .border-slate-200\/80,
+  html.dark .border-slate-200\/70,
+  html.dark .border-slate-100,
+  html.dark .border-\[\#E2E8F5\],
+  html.dark .border-\[\#E3ECFA\],
+  html.dark .border-\[\#DCE8FC\],
+  html.dark .border-white {
+    border-color: #334155 !important;
+  }
+
+  html.dark .bg-\[\#E8F0FE\] {
+    background-color: rgba(66, 133, 244, 0.2) !important;
+    color: #93C5FD !important;
+  }
+
+  html.dark .text-\[\#1967D2\],
+  html.dark .text-\[\#1D4ED8\] {
+    color: #93C5FD !important;
+  }
+
+  html.dark .bg-\[\#FDF3F2\],
+  html.dark .bg-\[\#FDF3F2\]\/95,
+  html.dark .bg-\[\#FDF3F2\]\/60,
+  html.dark .bg-\[\#FEF2F2\] {
+    background-color: rgba(234, 67, 53, 0.14) !important;
+  }
+
+  html.dark .bg-\[\#FEF9EC\],
+  html.dark .bg-\[\#FEF9EC\]\/95,
+  html.dark .bg-\[\#FFFDF7\] {
+    background-color: rgba(251, 188, 5, 0.14) !important;
+  }
+
+  html.dark .bg-\[\#F1FAF4\],
+  html.dark .bg-\[\#F1FAF4\]\/95,
+  html.dark .bg-\[\#F1FAF4\]\/60 {
+    background-color: rgba(52, 168, 83, 0.14) !important;
+  }
+}
+
+/* Sticky Notes Pastel Palette (Readable in both Light, Dark & Print Mode) */
+.sticky-note-yellow {
+  background-color: #FFFBEB;
+  border-color: #FDE68A;
+  color: #1E293B;
+}
+@media screen {
+  html.dark .sticky-note-yellow {
+    background-color: #3F3616;
+    border-color: #856B1E;
+    color: #FEF9C3;
+  }
+}
+
+.sticky-note-pink {
+  background-color: #FDF2F8;
+  border-color: #FBCFE8;
+  color: #1E293B;
+}
+@media screen {
+  html.dark .sticky-note-pink {
+    background-color: #3D1A2E;
+    border-color: #83325F;
+    color: #FCE7F3;
+  }
+}
+
+.sticky-note-blue {
+  background-color: #F0F9FF;
+  border-color: #BAE6FD;
+  color: #1E293B;
+}
+@media screen {
+  html.dark .sticky-note-blue {
+    background-color: #152C44;
+    border-color: #2B5D8C;
+    color: #E0F2FE;
+  }
+}
+
+.sticky-note-green {
+  background-color: #F0FDF4;
+  border-color: #BBF7D0;
+  color: #1E293B;
+}
+@media screen {
+  html.dark .sticky-note-green {
+    background-color: #143523;
+    border-color: #266C46;
+    color: #DCFCE7;
+  }
+}
+
+.sticky-note-lavender {
+  background-color: #F5F3FF;
+  border-color: #DDD6FE;
+  color: #1E293B;
+}
+@media screen {
+  html.dark .sticky-note-lavender {
+    background-color: #2E1F47;
+    border-color: #6D28D9;
+    color: #EDE9FE;
+  }
+}
+
+/* Print-only A4 layout container hidden on screen */
+.quick-revise-print-only {
+  display: none;
+}
+
+/* ========================================================================== */
+/* CLEAN A4 PRINT STYLESHEET FOR QUICK REVISE & STUDY REPORTS                 */
+/* ========================================================================== */
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html,
+  body,
+  html.dark,
+  html.dark body {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  header,
+  nav,
+  footer,
+  .no-print,
+  .quick-revise-screen-only {
+    display: none !important;
+  }
+
+  .quick-revise-print-only {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .google-gradient-panel,
+  html.dark .google-gradient-panel {
+    border: none !important;
+    background: #FFFFFF !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .print-card,
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+  }
+
+  .sticky-note-print-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+    overflow: visible !important;
+  }
+}

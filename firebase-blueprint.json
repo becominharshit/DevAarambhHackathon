@@ -1,0 +1,690 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User learning profile, preferences, and active study state.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Authenticated user UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the learner.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the learner.",
+          "minLength": 0,
+          "maxLength": 254
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Avatar photo URL of the learner.",
+          "minLength": 0,
+          "maxLength": 1024
+        },
+        "activeMaterialId": {
+          "type": "string",
+          "description": "ID of the currently active study material.",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "themePreference": {
+          "type": "string",
+          "description": "UI theme preference.",
+          "enum": ["light", "dark", "system"],
+          "maxLength": 16
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "lastActiveAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last active timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "email",
+        "photoURL",
+        "activeMaterialId",
+        "themePreference",
+        "createdAt",
+        "lastActiveAt",
+        "updatedAt"
+      ]
+    },
+    "MaterialRecord": {
+      "title": "MaterialRecord",
+      "description": "Uploaded PDF, pasted text, or YouTube lecture study material owned by a specific user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "sourceType": {
+          "type": "string",
+          "enum": ["pdf", "text", "youtube"],
+          "maxLength": 16
+        },
+        "pageCount": {
+          "type": "integer",
+          "description": "Number of pages or segments (1 to 20)."
+        },
+        "iconColor": {
+          "type": "string",
+          "enum": ["red", "blue", "green", "yellow"],
+          "maxLength": 16
+        },
+        "lastStudiedAt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "pagesData": {
+          "type": "string",
+          "description": "Serialized page-indexed or timestamp-indexed content.",
+          "minLength": 2,
+          "maxLength": 450000
+        },
+        "analysisData": {
+          "type": "string",
+          "description": "Serialized Gemini topic analysis and source metadata.",
+          "minLength": 0,
+          "maxLength": 150000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "title",
+        "sourceType",
+        "pageCount",
+        "iconColor",
+        "lastStudiedAt",
+        "pagesData",
+        "analysisData",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "QuizAttemptRecord": {
+      "title": "QuizAttemptRecord",
+      "description": "Completed diagnostic or adaptive quiz attempt record.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "materialId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "materialTitle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["diagnostic", "adaptive"],
+          "maxLength": 20
+        },
+        "score": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "percentage": {
+          "type": "integer"
+        },
+        "attemptData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 250000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "materialId",
+        "materialTitle",
+        "mode",
+        "score",
+        "total",
+        "percentage",
+        "attemptData",
+        "createdAt"
+      ]
+    },
+    "RevisionPlanRecord": {
+      "title": "RevisionPlanRecord",
+      "description": "Per-material adaptive revision plan and Mistake DNA insights owned by a user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "materialId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "tasksData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150000
+        },
+        "insightsData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "materialId",
+        "tasksData",
+        "insightsData",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "FlashcardDeckRecord": {
+      "title": "FlashcardDeckRecord",
+      "description": "Per-material active-recall flashcard deck owned by a user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "materialId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "flashcardsData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "materialId",
+        "flashcardsData",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "NoteRecord": {
+      "title": "NoteRecord",
+      "description": "Per-material sticky notes, concept mind map, and one-page revision sheet owned by a user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "materialId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "stickyNotesData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150000
+        },
+        "mindMapData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150000
+        },
+        "revisionSheetData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "materialId",
+        "stickyNotesData",
+        "mindMapData",
+        "revisionSheetData",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ConversationRecord": {
+      "title": "ConversationRecord",
+      "description": "Per-material AI Study Tutor chat conversation history owned by a user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "materialId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "messagesData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 250000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "materialId",
+        "messagesData",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ProgressRecord": {
+      "title": "ProgressRecord",
+      "description": "Per-material studied pages and topic mastery progress owned by a user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "materialId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "studiedPagesData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 20000
+        },
+        "masteryPct": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "materialId",
+        "studiedPagesData",
+        "masteryPct",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StudySessionRecord": {
+      "title": "StudySessionRecord",
+      "description": "Completed Pomodoro or focus study session owned by a user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "materialId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "materialTitle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "durationMinutes": {
+          "type": "integer"
+        },
+        "completedAt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "materialId",
+        "materialTitle",
+        "durationMinutes",
+        "completedAt",
+        "createdAt"
+      ]
+    },
+    "RevisionStateRecord": {
+      "title": "RevisionStateRecord",
+      "description": "Legacy per-material revision state record preserved for non-destructive migration.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "materialId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "tasksData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150000
+        },
+        "insightsData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150000
+        },
+        "chatData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 250000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "materialId",
+        "tasksData",
+        "insightsData",
+        "chatData",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LearningToolsRecord": {
+      "title": "LearningToolsRecord",
+      "description": "Legacy per-material learning tools record preserved for non-destructive migration.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "materialId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "stickyNotesData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150000
+        },
+        "flashcardsData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150000
+        },
+        "mindMapData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150000
+        },
+        "revisionSheetData": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "materialId",
+        "stickyNotesData",
+        "flashcardsData",
+        "mindMapData",
+        "revisionSheetData",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile document owned strictly by {userId}."
+    },
+    "/users/{userId}/materials/{materialId}": {
+      "schema": { "$ref": "#/entities/MaterialRecord" },
+      "description": "Study materials owned strictly by {userId}."
+    },
+    "/users/{userId}/quizAttempts/{attemptId}": {
+      "schema": { "$ref": "#/entities/QuizAttemptRecord" },
+      "description": "Completed quiz attempts owned strictly by {userId}."
+    },
+    "/users/{userId}/revisionPlans/{planId}": {
+      "schema": { "$ref": "#/entities/RevisionPlanRecord" },
+      "description": "Adaptive revision plans and Mistake DNA owned strictly by {userId}."
+    },
+    "/users/{userId}/flashcards/{deckId}": {
+      "schema": { "$ref": "#/entities/FlashcardDeckRecord" },
+      "description": "Active-recall flashcard decks owned strictly by {userId}."
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/NoteRecord" },
+      "description": "Sticky notes, mind maps, and revision sheets owned strictly by {userId}."
+    },
+    "/users/{userId}/conversations/{conversationId}": {
+      "schema": { "$ref": "#/entities/ConversationRecord" },
+      "description": "AI Study Tutor conversation histories owned strictly by {userId}."
+    },
+    "/users/{userId}/progress/{progressId}": {
+      "schema": { "$ref": "#/entities/ProgressRecord" },
+      "description": "Per-material page and mastery progress owned strictly by {userId}."
+    },
+    "/users/{userId}/studySessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/StudySessionRecord" },
+      "description": "Completed focus study sessions owned strictly by {userId}."
+    },
+    "/users/{userId}/attempts/{attemptId}": {
+      "schema": { "$ref": "#/entities/QuizAttemptRecord" },
+      "description": "Legacy quiz attempts subcollection preserved for migration."
+    },
+    "/users/{userId}/revisionStates/{stateId}": {
+      "schema": { "$ref": "#/entities/RevisionStateRecord" },
+      "description": "Legacy revisionStates subcollection preserved for migration."
+    },
+    "/users/{userId}/learningTools/{toolId}": {
+      "schema": { "$ref": "#/entities/LearningToolsRecord" },
+      "description": "Legacy learningTools subcollection preserved for migration."
+    }
+  }
+}
